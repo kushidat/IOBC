@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>SPARQL Sample</title>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/sparql.js" charset="UTF-8"></script>
+<script>
+<!-- // 
+
+var endpoint = "http://lod.hozo.jp/repositories/IOBC140";
+var start =  "http://purl.jp/bio/4/id/200906057747871335";
+
+var query = (function () {/*
+prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+select distinct ?ol0 ?sub0 ?p1 ?ol1 ?sub1# ?p2 ?ol2 ?sub2 ?p3 ?ol3 ?sub3  
+#select (count(distinct *) AS ?c) 
+#select distinct * 
+where{
+  FILTER (?p1 = <http://semanticscience.org/resource/SIO_000230> ||
+          ?p1 = <http://semanticscience.org/resource/SIO_000226> ||
+          ?p1 = <http://www.w3.org/2004/02/skos/core#related> 
+         )
+  FILTER(?StartingPoint = <#START#>)#http://purl.jp/bio/4/id/200906057747871335
+  ?StartingPoint ?p1 ?o1.
+  ?StartingPoint skos:prefLabel ?ol0;
+                 <http://purl.org/dc/terms/subject> ?sub0.
+  ?o1 skos:prefLabel ?ol1;
+                 <http://purl.org/dc/terms/subject> ?sub1.
+}
+*/}).toString().match(/\n([\s\S]*)\n/)[1];
+
+var query2 = (function () {/*
+prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+select distinct ?ol1 ?sub1 ?p2 ?ol2 ?sub2  
+where{
+  FILTER (?p1 = <http://semanticscience.org/resource/SIO_000230> ||
+          ?p1 = <http://semanticscience.org/resource/SIO_000226> ||
+          ?p1 = <http://www.w3.org/2004/02/skos/core#related> 
+         )
+  FILTER(?StartingPoint = <#START#>)
+  ?StartingPoint ?p1 ?o1.
+  ?StartingPoint skos:prefLabel ?ol0;
+                 <http://purl.org/dc/terms/subject> ?sub0.
+  ?o1 skos:prefLabel ?ol1;
+                 <http://purl.org/dc/terms/subject> ?sub1.
+
+#2段目
+  FILTER(?o2 != ?StartingPoint)
+  FILTER (?p2 = <http://semanticscience.org/resource/SIO_000230> ||
+          ?p2 = <http://semanticscience.org/resource/SIO_000226> ||
+          ?p2 = <http://www.w3.org/2004/02/skos/core#related> 
+         )
+ {?o2 ?p2 ?o1.} UNION {?o1 ?p2 ?o2.}
+ ?o2 skos:prefLabel ?ol2;
+                 <http://purl.org/dc/terms/subject> ?sub2.
+}
+*/}).toString().match(/\n([\s\S]*)\n/)[1];
+
+var query3 = (function () {/*
+prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+select distinct ?ol2 ?sub2 ?p3 ?ol3 ?sub3  
+#select (count(distinct *) AS ?c) 
+#select distinct * 
+where{
+  FILTER (?p1 = <http://semanticscience.org/resource/SIO_000230> ||
+          ?p1 = <http://semanticscience.org/resource/SIO_000226> ||
+          ?p1 = <http://www.w3.org/2004/02/skos/core#related> 
+         )
+  FILTER(?StartingPoint = <#START#>)
+  ?StartingPoint ?p1 ?o1.
+  ?StartingPoint skos:prefLabel ?ol0;
+                 <http://purl.org/dc/terms/subject> ?sub0.
+  ?o1 skos:prefLabel ?ol1;
+                 <http://purl.org/dc/terms/subject> ?sub1.
+
+#2段目
+  FILTER(?o2 != ?StartingPoint)
+  FILTER (?p2 = <http://semanticscience.org/resource/SIO_000230> ||
+          ?p2 = <http://semanticscience.org/resource/SIO_000226> ||
+          ?p2 = <http://www.w3.org/2004/02/skos/core#related> 
+         )
+ {?o2 ?p2 ?o1.} UNION {?o1 ?p2 ?o2.}
+ ?o2 skos:prefLabel ?ol2;
+                 <http://purl.org/dc/terms/subject> ?sub2.
+#3段目
+  FILTER(?o3 != ?StartingPoint)
+  FILTER(?o3 != ?o1)
+  FILTER (?p3 = <http://semanticscience.org/resource/SIO_000230> ||
+          ?p3 = <http://semanticscience.org/resource/SIO_000226> ||
+          ?p3 = <http://www.w3.org/2004/02/skos/core#related> 
+         )
+  {?o3 ?p3 ?o2.} UNION {?o2 ?p3 ?o3.}
+  ?o3 skos:prefLabel ?ol3      ;
+                 <http://purl.org/dc/terms/subject> ?sub3.
+}
+*/}).toString().match(/\n([\s\S]*)\n/)[1];
+
+
+$(window).load(function() {
+
+	$('#find_query').click(function(){
+
+		endpoint = $('#ep_url').val(); 
+		var idtext = $('#text').val().split(":");
+		start = "http://purl.jp/bio/4/id/"+ idtext[1];
+		//alert(start);
+		
+		qr = sendQuery(
+			endpoint,
+			query.replace("#START#",start)
+		//	$('#query_area').val().replace(/[\n\r]/g,"")
+		);
+
+		qr.fail(
+			function (xhr, textStatus, thrownError) {
+				alert("Error: A '" + textStatus+ "' occurred.");
+			}
+		);
+		qr.done(
+			function (d) {
+				$('#result_area').val("?source,?attribute1,?interaction,?target,?attribute2\n");
+				result1(d.results.bindings);
+			}
+		);
+	});
+
+	$('#result_div').hide();
+});
+
+function result1(data){
+	result_table(data);
+	qr2 = sendQuery(
+		endpoint,
+		query2.replace("#START#",start)
+	//	$('#query_area').val().replace(/[\n\r]/g,"")
+	);
+
+	qr2.fail(
+		function (xhr, textStatus, thrownError) {
+			alert("Error: A '" + textStatus+ "' occurred.");
+		}
+	);
+	qr2.done(
+		function (d) {
+			result2(d.results.bindings);
+			//result_table(d.results.bindings);
+		}
+	);
+}
+
+function result2(data){
+	result_table(data);
+	qr3 = sendQuery(
+		endpoint,
+		query3.replace("#START#",start)
+	//	$('#query_area').val().replace(/[\n\r]/g,"")
+	);
+
+	qr3.fail(
+		function (xhr, textStatus, thrownError) {
+			alert("Error: A '" + textStatus+ "' occurred.");
+		}
+	);
+	qr3.done(
+		function (d) {
+			//result(d.results.bindings);
+			result_table(d.results.bindings);
+		}
+	);
+}
+
+
+
+//結果表示用の関数
+function result_table(data){
+	var result_div = $('#result_div');
+	
+	var table = $('#result_list')[0];
+
+
+	if (data instanceof Array) {
+		//var result_html =""; 
+		
+		var resultCSV= $('#result_area').val();
+	
+		for (var d = 0; d < data.length; d++) {
+			var i = 0;
+			for ( var key in data[d]) {
+				//result_html += d+':'+key+'\t'+data[d][key].value+ '<br>'; 
+				resultCSV += data[d][key].value+ ',';
+			}
+			//result_html += '<br>';
+			resultCSV += data[d][key].value+ '\n';
+		}
+	result_div.show();
+	$('#result_area').val(resultCSV)
+	}
+}
+
+
+function handleDownload() {
+    var content = $('#result_area').val();
+    var blob = new Blob([ content ], { "type" : "text/plain" });
+
+    if (window.navigator.msSaveBlob) { 
+        window.navigator.msSaveBlob(blob, "test.csv"); 
+        window.navigator.msSaveOrOpenBlob(blob, "test.txt"); 
+    } else {
+        document.getElementById("download").href = window.URL.createObjectURL(blob);
+    }
+}
+
+
+// -->
+</script>
+
+<script src="js/suggest.js"></script>
+    <script src="js/con_list.js"></script>
+    <script>
+      <!--
+      // wondowのonloadイベントでSuggestを生成
+      // (listは、list.js内で定義している)
+      var start = function(){new Suggest.Local("text", "suggest", list, {dispMax: 30, highlight: true});};
+      window.addEventListener ?
+        window.addEventListener('load', start, false) :
+        window.attachEvent('onload', start);
+        //-->
+    </script>
+
+<style type="text/css">
+      <!--
+        #suggest {
+		  position: absolute;
+		  background-color: #FFFFFF;
+		  border: 1px solid #CCCCFF;
+		  width: 400px;
+		  height:200px;
+		  overflow: auto;
+		}
+        #suggest div {
+          padding: 1px;
+          display: block;
+          width: 400px;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+        #suggest div.select{
+          color: #FFFFFF;
+          background-color: #3366FF;
+        }
+        #suggest div.over{
+          background-color: #99CCFF;
+        }
+        #suggest strong{
+          font-weight: bold;
+        }
+        -->
+    </style>
+
+</head>
+<body>
+
+
+<div id="container">
+	<div id="header">
+	<h2 style="background-color: #99cc00">Path Generater for IOBC<BR>(Interlinking Ontology for Biological Concepts)</h2>
+	</div>
+
+	<div id="right" class="right">
+		<div>
+			SPARQL Endpoint:<br>
+			<input id="ep_url" type="text" size="80" value="http://lod.hozo.jp/repositories/IOBC140"><BR>
+		<!--	Starting Concept(IRI):<input id="start" type="text" size="60" value="http://purl.jp/bio/4/id/200906057747871335">
+		<div style="margin-left:30px; margin-top:4px;">
+        -->
+		<div style="margin-top:4px;">
+            Starting Concept(IRI):<input id="text" type="text" name="pattern" value="" autocomplete="off" size="80" style="display: block"/>
+            <!-- 補完候補を表示するエリア -->
+            <div id="suggest" style="display:none;"></div>
+            Input parts of name of Starting Concept. <br>
+            Then full name of the concept with ID will be suggested. <br>
+             eg.) Fibrinolysis
+           </div>
+		<input type="button" id="find_query" value="Get Path Info."/>
+		</div>
+		<div>
+		</div>
+		<!-- 結果ペイン -->
+		<div id="result_div">
+			<textarea id="result_area" cols="80" rows="10"></textarea>
+			<a id="download" href="#" download="test.csv" onclick="handleDownload()"><br>
+			Download</a>
+			→You can import the file into <a href="https://cytoscape.org/">Cytoscape</a>.
+		</div>
+		
+	</div>
+	
+
+</div>
+</body>
+</html>
