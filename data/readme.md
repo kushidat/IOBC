@@ -1,1 +1,1 @@
-We converted ttl format to rdf/xml and owl/xml using Protege.
+We converted the original ttl format to the rdf/xml and owl/xml by using Protege.
